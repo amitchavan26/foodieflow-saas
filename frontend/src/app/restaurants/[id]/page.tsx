@@ -7,6 +7,8 @@ import { createOrder, fetchMenuItems } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
 
+export const dynamic = 'force-dynamic';
+
 type MenuItem = {
   id: string;
   name: string;

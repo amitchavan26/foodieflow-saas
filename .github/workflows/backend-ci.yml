@@ -33,3 +33,6 @@ jobs:
           DB_USERNAME: test
           DB_PASSWORD: test
           JWT_SECRET: test-secret-key-for-ci-pipeline-must-be-long-enough
+
+        - name: Build and Test with Gradle
+          run: ./gradlew clean build
