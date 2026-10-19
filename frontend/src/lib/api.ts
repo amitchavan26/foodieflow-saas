@@ -14,10 +14,19 @@ function getHeaders() {
   return headers;
 }
 
-export async function fetchRestaurants(lat?: number, lng?: number, radiusMeters: number = 5000) {
-  // Build the URL with query parameters if lat/lng are provided
-  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/restaurants`);
-  if (lat && lng) {
+ export async function fetchRestaurants(lat?: number, lng?: number, radiusMeters: number = 5000) {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL;
+  
+  // 1. Safety check: throw a clear error if the env var is missing
+  if (!baseUrl) {
+    throw new Error("NEXT_PUBLIC_API_URL is not defined. Check your .env.local or Render settings.");
+  }
+
+  // 2. Remove trailing slash if it exists to prevent double slashes (e.g., //restaurants)
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const url = new URL(`${cleanBaseUrl}/restaurants`);
+
+  if (lat !== undefined && lng !== undefined) {
     url.searchParams.append('lat', lat.toString());
     url.searchParams.append('lng', lng.toString());
     url.searchParams.append('radiusMeters', radiusMeters.toString());
