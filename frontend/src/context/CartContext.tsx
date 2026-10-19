@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
 export type CartItem = {
   id: string;
@@ -20,7 +20,29 @@ type CartContextType = {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  // 1. Start with an empty array to prevent build-time/SSR errors
   const [items, setItems] = useState<CartItem[]>([]);
+  const [isHydrated, setIsHydrated] = useState(false);
+
+  // 2. Load from localStorage ONLY on the client side after the component mounts
+  useEffect(() => {
+    const savedCart = localStorage.getItem("foodieflow-cart");
+    if (savedCart) {
+      try {
+        setItems(JSON.parse(savedCart));
+      } catch (e) {
+        console.error("Failed to parse cart from localStorage", e);
+      }
+    }
+    setIsHydrated(true);
+  }, []);
+
+  // 3. Save to localStorage whenever items change (but only after hydration)
+  useEffect(() => {
+    if (isHydrated) {
+      localStorage.setItem("foodieflow-cart", JSON.stringify(items));
+    }
+  }, [items, isHydrated]);
 
   const addItem = (newItem: Omit<CartItem, "quantity">) => {
     setItems((prev) => {
@@ -41,6 +63,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = () => setItems([]);
 
   const totalInCents = items.reduce((sum, item) => sum + item.priceInCents * item.quantity, 0);
+
+  // Prevent rendering children until localStorage is loaded to avoid UI flickering
+  if (!isHydrated) {
+    return null; // Or return a loading spinner
+  }
 
   return (
     <CartContext.Provider value={{ items, addItem, removeItem, clearCart, totalInCents }}>
