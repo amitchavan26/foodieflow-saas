@@ -48,6 +48,13 @@ dependencies {
     
     // Webhook JSON parsing
     implementation("com.fasterxml.jackson.core:jackson-databind")
+
+    // Razorpay Java SDK
+    implementation("com.razorpay:razorpay-java:1.4.3")
+    implementation("org.json:json:20231013") // Required by Razorpay SDK
+
+    // Hibernate spatial dependency
+    implementation("org.hibernate.orm:hibernate-spatial:6.6.13.Final")
 }
 
 tasks.withType<Test> {

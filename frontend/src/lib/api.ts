@@ -14,8 +14,16 @@ function getHeaders() {
   return headers;
 }
 
-export async function fetchRestaurants() {
-  const response = await fetch(`${API_BASE_URL}/restaurants`, {
+export async function fetchRestaurants(lat?: number, lng?: number, radiusMeters: number = 5000) {
+  // Build the URL with query parameters if lat/lng are provided
+  const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/restaurants`);
+  if (lat && lng) {
+    url.searchParams.append('lat', lat.toString());
+    url.searchParams.append('lng', lng.toString());
+    url.searchParams.append('radiusMeters', radiusMeters.toString());
+  }
+
+  const response = await fetch(url.toString(), {
     headers: getHeaders(),
     cache: "no-store",
   });
@@ -24,16 +32,17 @@ export async function fetchRestaurants() {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.message || "Failed to fetch restaurants");
   }
+
   return response.json();
 }
 
-export async function createOrder(restaurantId: string, payload: {
-  deliveryAddress: string;
-  items: { menuItemId: string; quantity: number }[];
-}) {
-  const response = await fetch(`${API_BASE_URL}/restaurants/${restaurantId}/orders`, {
+export async function createOrder(restaurantId: string, payload: any) {
+  const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/restaurants/${restaurantId}/orders`, {
     method: "POST",
-    headers: getHeaders(), // <-- JWT is now included here
+    headers: {
+      ...getHeaders(),
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(payload),
   });
 
@@ -42,7 +51,8 @@ export async function createOrder(restaurantId: string, payload: {
     throw new Error(errorData.message || "Failed to create order");
   }
 
-  return response.json();
+  // Backend now returns { clientSecret: "..." }
+  return response.json(); 
 }
 
 export async function login(email: string, password: string) {

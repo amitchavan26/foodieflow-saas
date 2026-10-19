@@ -2,6 +2,8 @@ package com.fooddelivery.restaurant.domain;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import org.locationtech.jts.geom.Point;
+import jakarta.persistence.Column;
 
 import com.fooddelivery.common.persistence.BaseAuditedEntity;
 
@@ -23,6 +25,10 @@ public class Restaurant extends BaseAuditedEntity {
 
     @Column(nullable = false, length = 200)
     private String name;
+
+    // Geospatial location for radius searches (SRID 4326 = WGS 84)
+    @Column(columnDefinition = "geography(Point, 4326)")
+    private Point location;
 
     @Column(nullable = false, unique = true, length = 120)
     private String slug;

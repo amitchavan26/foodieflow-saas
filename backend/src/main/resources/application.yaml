@@ -21,3 +21,7 @@ app:
   jwt:
     secret: ${JWT_SECRET:your-super-secret-jwt-key-must-be-at-least-256-bits-long-for-hs256}
     expiration: 86400000
+
+razorpay:
+  key-id: rzp_test_TpMc0Gq1c80E1Z
+  key-secret: A00J7she3Wl35g6AL5FSmEgO

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/context/CartContext";
 import { createOrder, fetchMenuItems } from "@/lib/api";
+import RazorpayCheckout from "@/components/RazorpayCheckout";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, ShoppingCart, CheckCircle, Loader2 } from "lucide-react";
 
@@ -18,10 +19,13 @@ type MenuItem = {
 export default function RestaurantClient({ restaurantId }: { restaurantId: string }) {
   const router = useRouter();
   const { items, addItem, removeItem, totalInCents, clearCart } = useCart();
-
+  
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [isLoadingMenu, setIsLoadingMenu] = useState(true);
   const [menuError, setMenuError] = useState<string | null>(null);
+  
+  // Razorpay state
+  const [paymentDetails, setPaymentDetails] = useState<any>(null);
 
   const [deliveryAddress, setDeliveryAddress] = useState("");
   const [addressError, setAddressError] = useState("");
@@ -52,7 +56,7 @@ export default function RestaurantClient({ restaurantId }: { restaurantId: strin
     e.preventDefault();
     setAddressError("");
     setOrderError(null);
-
+  
     if (!deliveryAddress.trim()) {
       setAddressError("Delivery address is required");
       return;
@@ -61,20 +65,21 @@ export default function RestaurantClient({ restaurantId }: { restaurantId: strin
       setOrderError("Your cart is empty. Please add items before ordering.");
       return;
     }
-
+  
     setIsOrderLoading(true);
-
+  
     try {
       const payload = {
         deliveryAddress,
         items: items.map((item) => ({ menuItemId: item.id, quantity: item.quantity })),
       };
-
-      await createOrder(restaurantId, payload);
-      setIsSuccess(true);
-      clearCart();
+  
+      // This now returns Razorpay payment details from the backend
+      const response = await createOrder(restaurantId, payload);
+      setPaymentDetails(response); // Trigger the Razorpay button to show
+      
     } catch (err) {
-      setOrderError(err instanceof Error ? err.message : "Failed to place order. Please try again.");
+      setOrderError(err instanceof Error ? err.message : "Failed to initialize order. Please try again.");
     } finally {
       setIsOrderLoading(false);
     }
@@ -165,31 +170,42 @@ export default function RestaurantClient({ restaurantId }: { restaurantId: strin
                 </div>
               )}
 
-              <form onSubmit={handleSubmitOrder} className="mt-4 space-y-3">
-                <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Delivery Address</label>
-                  <textarea
-                    value={deliveryAddress}
-                    onChange={(e) => setDeliveryAddress(e.target.value)}
-                    className={`w-full rounded-md border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${addressError ? "border-red-500" : "border-gray-300"}`}
-                    rows={3}
-                    placeholder="Enter your full delivery address"
-                    disabled={isOrderLoading}
-                  />
-                  {addressError && <p className="mt-1 text-xs text-red-500">{addressError}</p>}
-                </div>
-
-                {orderError && (
-                  <div className="flex items-center rounded-md bg-red-50 p-2 text-sm text-red-700">
-                    <AlertCircle className="mr-2 h-4 w-4 flex-shrink-0" />
-                    {orderError}
+              {/* Checkout Form or Razorpay Payment */}
+              {paymentDetails ? (
+                <RazorpayCheckout 
+                  paymentDetails={paymentDetails} 
+                  onSuccess={() => {
+                    setIsSuccess(true);
+                    clearCart();
+                  }} 
+                />
+              ) : (
+                <form onSubmit={handleSubmitOrder} className="mt-4 space-y-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Delivery Address</label>
+                    <textarea
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      className={`w-full rounded-md border p-2 text-sm focus:outline-none focus:ring-2 focus:ring-orange-500 ${addressError ? "border-red-500" : "border-gray-300"}`}
+                      rows={3}
+                      placeholder="Enter your full delivery address"
+                      disabled={isOrderLoading}
+                    />
+                    {addressError && <p className="mt-1 text-xs text-red-500">{addressError}</p>}
                   </div>
-                )}
 
-                <Button type="submit" variant="primary" isLoading={isOrderLoading} className="w-full" disabled={items.length === 0 || isOrderLoading}>
-                  {isOrderLoading ? "Placing Order..." : `Place Order (₹${(totalInCents / 100).toFixed(2)})`}
-                </Button>
-              </form>
+                  {orderError && (
+                    <div className="flex items-center rounded-md bg-red-50 p-2 text-sm text-red-700">
+                      <AlertCircle className="mr-2 h-4 w-4 flex-shrink-0" />
+                      {orderError}
+                    </div>
+                  )}
+
+                  <Button type="submit" variant="primary" isLoading={isOrderLoading} className="w-full" disabled={items.length === 0 || isOrderLoading}>
+                    {isOrderLoading ? "Initializing Payment..." : `Proceed to Payment (₹${(totalInCents / 100).toFixed(2)})`}
+                  </Button>
+                </form>
+              )}
             </div>
           </div>
         </div>

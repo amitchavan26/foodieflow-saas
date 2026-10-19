@@ -1,13 +1,13 @@
 package com.fooddelivery.order.api;
 
-import com.fooddelivery.common.security.RequireTenantOwnership;
 import com.fooddelivery.common.security.CurrentUserService;
 import com.fooddelivery.order.api.dto.CreateOrderRequest;
-import com.fooddelivery.order.api.dto.OrderResponse;
 import com.fooddelivery.order.application.OrderService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.Map;
 import java.util.UUID;
 
 @RestController
@@ -16,17 +16,18 @@ import java.util.UUID;
 public class OrderController {
 
     private final OrderService orderService;
-    private final CurrentUserService currentUserService; // Injected securely
+    private final CurrentUserService currentUserService;
 
     @PostMapping
-    @RequireTenantOwnership // Ensures the restaurantId in the path is valid/owned
-    public OrderResponse createOrder(
+    public ResponseEntity<Map<String, Object>> createOrder(
             @PathVariable UUID restaurantId,
             @Valid @RequestBody CreateOrderRequest request) {
         
-        // Securely get the actual UUID of the logged-in user from the database
-        UUID currentUserId = currentUserService.getCurrentUserId(); 
+        UUID customerUserId = currentUserService.getCurrentUserId();
+        long totalAmountInCents = 1500L; // Example: ₹15.00 (Replace with actual cart total logic)
         
-        return orderService.createOrder(restaurantId, currentUserId, request);
+        Map<String, Object> paymentDetails = orderService.createOrder(restaurantId, customerUserId, request.deliveryAddress(), totalAmountInCents);
+        
+        return ResponseEntity.ok(paymentDetails);
     }
 }
