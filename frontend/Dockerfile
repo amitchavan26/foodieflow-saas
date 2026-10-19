@@ -11,6 +11,11 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# 🔥 CRITICAL FIX: Explicitly pass the env var from Render into the Docker build
+ARG NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN npm run build
 
 # Runner stage (production)
@@ -27,9 +32,6 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
-
-# Let Render's automatic PORT environment variable take control
-# and ensure it binds to all network interfaces
 ENV HOSTNAME "0.0.0.0"
 
 CMD ["node", "server.js"]
