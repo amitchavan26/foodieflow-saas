@@ -1,5 +1,5 @@
-// Force Next.js to render this route dynamically at request time
-export const dynamic = 'force-dynamic';
+// Prevent blocking-prerender dynamic route failure during build
+export const instant = false;
 
 import RestaurantClient from "./RestaurantClient";
 
