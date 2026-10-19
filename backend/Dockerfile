@@ -2,6 +2,8 @@
 FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
 COPY . .
+# Ensure gradlew has execute permissions
+RUN chmod +x gradlew
 # Build the jar, skip tests to speed up deployment
 RUN ./gradlew build -x test --no-daemon
 
