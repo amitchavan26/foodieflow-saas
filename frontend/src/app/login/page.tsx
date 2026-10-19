@@ -17,8 +17,18 @@ export default function LoginPage() {
     setError("");
     setIsLoading(true);
 
+    // 1. Safety check: Ensure the API URL is actually defined
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    if (!apiUrl) {
+      setError("Configuration error: NEXT_PUBLIC_API_URL is missing. Check your .env.local or Render settings.");
+      setIsLoading(false);
+      return;
+    }
+
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+      console.log("Attempting login to:", `${apiUrl}/auth/login`);
+      
+      const response = await fetch(`${apiUrl}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
@@ -30,14 +40,16 @@ export default function LoginPage() {
       }
 
       const data = await response.json();
+      console.log("Login successful, token received:", data.token ? "Yes" : "No");
       
-      // Save the JWT token to localStorage so api.ts can use it
+      // Save the JWT token to localStorage
       localStorage.setItem("token", data.token); 
       
       // Redirect to home page
       router.push("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed. Please try again.");
+      console.error("Login error details:", err);
+      setError(err instanceof Error ? err.message : "An unexpected error occurred. Check the browser console (F12) for details.");
     } finally {
       setIsLoading(false);
     }
