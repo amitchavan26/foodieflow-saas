@@ -170,13 +170,12 @@ export default function RestaurantClient({ restaurantId }: { restaurantId: strin
                 </div>
               )}
 
-              {/* Checkout Form or Razorpay Payment */}
-              {paymentDetails ? (
+             {paymentDetails ? (
                 <RazorpayCheckout 
                   paymentDetails={paymentDetails} 
                   onSuccess={() => {
-                    setIsSuccess(true);
                     clearCart();
+                    router.push(`/orders/${paymentDetails.orderId}/track`);
                   }} 
                 />
               ) : (

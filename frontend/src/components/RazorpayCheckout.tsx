@@ -11,6 +11,7 @@ type PaymentDetails = {
   keyId: string;
   name: string;
   description: string;
+  orderId: string;
 };
 
 export default function RazorpayCheckout({ 
@@ -54,6 +55,7 @@ export default function RazorpayCheckout({
         console.log("Payment successful:", response);
         setIsProcessing(false);
         onSuccess();
+        
       },
       prefill: {
         name: "Test Customer",

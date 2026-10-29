@@ -54,6 +54,7 @@ public class SecurityConfig {
                 // 1. Allow public access to auth and webhooks
                 .requestMatchers("/api/v1/auth/**").permitAll() 
                 .requestMatchers("/api/v1/webhooks/**").permitAll() 
+                .requestMatchers("/api/v1/orders/*/track").permitAll() 
                 
                 // 2. ALLOW PUBLIC ACCESS TO ALL RESTAURANT AND MENU ENDPOINTS <-- FIXED HERE
                 .requestMatchers("/api/v1/restaurants/**").permitAll()

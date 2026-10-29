@@ -63,6 +63,7 @@ public class OrderService {
 
             // 4. Return details needed by the frontend
             return Map.of(
+                "orderId", savedOrder.getId().toString(),
                 "razorpayOrderId", razorpayOrder.get("id"),
                 "amount", totalAmountInCents,
                 "currency", "INR",

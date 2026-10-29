@@ -1,33 +1,62 @@
 package com.fooddelivery.order.api;
 
-import com.fooddelivery.common.security.CurrentUserService;
-import com.fooddelivery.order.api.dto.CreateOrderRequest;
-import com.fooddelivery.order.application.OrderService;
-import jakarta.validation.Valid;
+import com.fooddelivery.order.application.OrderTrackingService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.web.bind.annotation.*;
-import java.util.Map;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
+import com.fooddelivery.common.security.JwtService; // Adjust import if needed
+
+import java.io.IOException;
 import java.util.UUID;
 
+@Slf4j
 @RestController
-@RequestMapping("/api/v1/restaurants/{restaurantId}/orders")
+@RequestMapping("/api/v1/orders")
 @RequiredArgsConstructor
 public class OrderController {
 
-    private final OrderService orderService;
-    private final CurrentUserService currentUserService;
+    private final OrderTrackingService trackingService;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
-    @PostMapping
-    public ResponseEntity<Map<String, Object>> createOrder(
-            @PathVariable UUID restaurantId,
-            @Valid @RequestBody CreateOrderRequest request) {
+    // ... (keep your existing createOrder method here) ...
+
+    @GetMapping(value = "/{orderId}/track", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter trackOrder(@PathVariable UUID orderId, @RequestParam("token") String token) {
+        log.info("🚀 SSE Track endpoint hit for order: {}", orderId);
         
-        UUID customerUserId = currentUserService.getCurrentUserId();
-        long totalAmountInCents = 1500L; // Example: ₹15.00 (Replace with actual cart total logic)
-        
-        Map<String, Object> paymentDetails = orderService.createOrder(restaurantId, customerUserId, request.deliveryAddress(), totalAmountInCents);
-        
-        return ResponseEntity.ok(paymentDetails);
+        try {
+            // 1. Manually validate the token (bypasses GlobalExceptionHandler JSON issues)
+            String userEmail = jwtService.extractUsername(token);
+            UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
+            
+            if (userEmail == null || !jwtService.isTokenValid(token, userDetails)) {
+                throw new RuntimeException("Invalid or expired token");
+            }
+
+            // 2. Start tracking
+            SseEmitter emitter = trackingService.createEmitter(orderId);
+            trackingService.simulateRestaurantWorkflow(orderId);
+            return emitter;
+            
+        } catch (Exception e) {
+            log.error("💥 Tracking failed for {}: {}", orderId, e.getMessage());
+            
+            // 3. Safely return an SSE error event instead of throwing
+            SseEmitter errorEmitter = new SseEmitter(0L);
+            try {
+                errorEmitter.send(SseEmitter.event()
+                        .name("error")
+                        .data("Tracking failed: " + e.getMessage()));
+                errorEmitter.completeWithError(e);
+            } catch (IOException ioException) {
+                log.error("Failed to send SSE error event", ioException);
+            }
+            return errorEmitter;
+        }
     }
 }
