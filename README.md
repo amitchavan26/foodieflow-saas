@@ -94,12 +94,3 @@ foodieflow-saas/
 | POST | `/api/v1/auth/login` | Obtain a JWT |
 | GET | `/api/v1/restaurants?lat=&lng=&radiusMeters=` | Nearby restaurants |
 | POST | `/api/v1/restaurants/{id}/orders` | Create order + payment session |
-
-## 🚀 Local Setup
-
-### 1. Start the database
-```bash
-docker run --name fooddelivery-db \
-  -e POSTGRES_PASSWORD=postgres \
-  -e POSTGRES_DB=fooddelivery \
-  -p 5432:5432 -d postgis/postgis:15-3.3

@@ -1,25 +1,22 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { CartProvider } from "@/context/CartContext";
-
-// This defines the "inter" variable that was causing the error
-const inter = Inter({ subsets: ["latin"] });
+import Navbar from "@/components/Navbar";
 
 export const metadata: Metadata = {
-  title: "FoodieFlow",
-  description: "Food Delivery SaaS Platform",
+  title: "FoodieFlow | Food delivery, done right",
+  description:
+    "Discover nearby restaurants, order your favorite meals, and pay securely with Razorpay.",
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
-  children: React.ReactNode;
-}>) {
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body className={inter.className}>
+      <body className="bg-gray-50 text-gray-900 antialiased">
         <CartProvider>
+          <Navbar />
           {children}
         </CartProvider>
       </body>

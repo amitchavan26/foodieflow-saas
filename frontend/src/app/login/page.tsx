@@ -44,6 +44,7 @@ export default function LoginPage() {
       
       // Save the JWT token to localStorage
       localStorage.setItem("token", data.token); 
+      window.dispatchEvent(new Event("auth-change"));
       
       // Redirect to home page
       router.push("/");
